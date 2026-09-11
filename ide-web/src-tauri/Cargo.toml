@@ -1,0 +1,16 @@
+[package]
+name = "glm-standalone-ide"
+version = "1.0.0"
+description = "GLM Standalone IDE native shell"
+authors = ["GLM"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]

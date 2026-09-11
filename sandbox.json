@@ -1,0 +1,14 @@
+﻿{
+  "enabled": true,
+  "runtime": "wsl2",
+  "command": [],
+  "distro": "GLM-Sandbox",
+  "user": "glmsandbox",
+  "max_concurrent": 2,
+  "network_mode": "deny",
+  "limits": {
+    "max_processes": 32,
+    "memory_kb": 524288,
+    "hard_timeout_seconds": 300
+  }
+}

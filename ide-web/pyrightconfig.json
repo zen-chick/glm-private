@@ -1,0 +1,7 @@
+﻿{
+  "include": ["."],
+  "exclude": ["node_modules", "vs", "src-tauri/target"],
+  "typeCheckingMode": "standard",
+  "reportMissingImports": "warning",
+  "reportMissingTypeStubs": "none"
+}

@@ -1,0 +1,59 @@
+﻿{
+  "routing_tiers": [
+    {"order": 0, "name": "nano",  "model_id": "GLM-0.1-nano-gate",  "base_model": "qwen3:0.5b",         "execution": "cpu"},
+    {"order": 1, "name": "local", "model_id": "GLM-0.2-fast",       "base_model": "qwen2.5-coder:7b",   "execution": "gpu"},
+    {"order": 2, "name": "tier1", "model_id": "claude-haiku-4-5",   "base_model": "claude-haiku-4-5",   "execution": "cloud", "provider": "anthropic"},
+    {"order": 3, "name": "tier2", "model_id": "claude-sonnet-5",    "base_model": "claude-sonnet-5",    "execution": "cloud", "provider": "anthropic"}
+  ],
+  "nano_models": [
+    {
+      "id":            "GLM-0.1-nano-gate",
+      "role":          "classify_and_filter",
+      "base_model":    "qwen3:0.5b",
+      "execution":     "cpu",
+      "keep_alive":    -1,
+      "max_output_tokens": 50,
+      "temperature":   0.0,
+      "num_thread":    4,
+      "guaranteed_speed_toks": 16
+    },
+    {
+      "id":            "GLM-0.1-nano-light",
+      "role":          "light_task_executor",
+      "base_model":    "qwen3.5:1.7b",
+      "execution":     "cpu",
+      "keep_alive":    "5m",
+      "max_output_tokens": 200,
+      "temperature":   0.3,
+      "num_thread":    6,
+      "guaranteed_speed_toks": 9
+    }
+  ],
+  "models": [
+    {
+      "id":             "GLM-0.2-fast",
+      "base_model":     "qwen2.5-coder:7b",
+      "execution":      "gpu",
+      "keep_alive":     "10m",
+      "last_checked":   null,
+      "last_updated":   null,
+      "digest":         null,
+      "auto_update":    true,
+      "update_approved": null
+    }
+  ],
+  "cloud_api": {
+    "providers": {
+      "anthropic": {
+        "base_url": "https://api.anthropic.com/v1/messages",
+        "models": ["claude-haiku-4-5", "claude-sonnet-5"]
+      },
+      "openai": {
+        "base_url": "https://api.openai.com/v1/chat/completions",
+        "models": ["gpt-4.1", "gpt-5"]
+      }
+    },
+    "budget_limit_usd":  15.0
+  },
+  "last_update_check": null
+}

@@ -1,0 +1,134 @@
+{
+  "name": "glm-router",
+  "displayName": "GLM Router",
+  "description": "ローカル/クラウドAI自動振り分けエンジン（GitHub Copilot併用対応）",
+  "version": "0.1.0",
+  "publisher": "pcgam",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["AI", "Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "glm.startRouter",
+        "title": "GLM: ルーター起動",
+        "icon": "$(play)"
+      },
+      {
+        "command": "glm.stopRouter",
+        "title": "GLM: ルーター停止",
+        "icon": "$(stop)"
+      },
+      {
+        "command": "glm.status",
+        "title": "GLM: ステータス確認"
+      },
+      {
+        "command": "glm.sessions",
+        "title": "GLM: セッション一覧"
+      },
+      {
+        "command": "glm.doctor",
+        "title": "GLM: システム診断"
+      },
+      {
+        "command": "glm.switchMode",
+        "title": "GLM: ルーティングモード切替"
+      },
+      {
+        "command": "glm.dashboard",
+        "title": "GLM: ダッシュボードを開く"
+      },
+      {
+        "command": "glm.chat",
+        "title": "GLM: チャットを開く",
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "glm.agentChat",
+        "title": "GLM: Agentモードでチャットを開く",
+        "icon": "$(hubot)"
+      },
+      {
+        "command": "glm.planChat",
+        "title": "GLM: Planモードでチャットを開く",
+        "icon": "$(list-ordered)"
+      },
+      {
+        "command": "glm.clearChat",
+        "title": "GLM: チャット履歴を消去",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "glm.showGitDiff",
+        "title": "GLM: ワークスペース差分を表示",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "glm.runEval",
+        "title": "GLM: MLOpsモデル評価と自動昇格テスト実行",
+        "icon": "$(beaker)"
+      }
+    ],
+    "configuration": {
+      "title": "GLM Router",
+      "properties": {
+        "glm.routerPath": {
+          "type": "string",
+          "default": "",
+          "description": "router.py の絶対パス（空欄=自動検出）"
+        },
+        "glm.port": {
+          "type": "number",
+          "default": 8765,
+          "description": "ルーターのポート番号"
+        },
+        "glm.mode": {
+          "type": "string",
+          "default": "STRATEGY",
+          "enum": ["LOCAL_ONLY", "THRESHOLD", "STRATEGY"],
+          "enumDescriptions": [
+            "常にローカルOllama（API不要）",
+            "トークン数で自動切替",
+            "サイズ×複雑度×予算で自動最適化"
+          ],
+          "description": "デフォルトルーティングモード"
+        },
+        "glm.autoStart": {
+          "type": "boolean",
+          "default": false,
+          "description": "VSCode起動時にルーターを自動起動する"
+        }
+      }
+    },
+    "menus": {
+      "commandPalette": [
+        { "command": "glm.startRouter" },
+        { "command": "glm.stopRouter" },
+        { "command": "glm.status" },
+        { "command": "glm.sessions" },
+        { "command": "glm.doctor" },
+        { "command": "glm.switchMode" },
+        { "command": "glm.dashboard" },
+        { "command": "glm.chat" },
+        { "command": "glm.agentChat" },
+        { "command": "glm.planChat" },
+        { "command": "glm.clearChat" },
+        { "command": "glm.showGitDiff" },
+        { "command": "glm.runEval" }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "npx --yes typescript -p ./",
+    "watch": "npx --yes typescript -watch -p ./",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0",
+    "@vscode/vsce": "^2.22.0"
+  }
+}

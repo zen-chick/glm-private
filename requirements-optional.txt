@@ -1,0 +1,4 @@
+﻿# Optional runtime integrations for GLM Standalone IDE
+jupyter-client>=8.6
+ipykernel>=6.29
+debugpy>=1.8

@@ -1,0 +1,51 @@
+﻿# Secrets and machine-local configuration
+.env
+.env.*
+!.env.example
+.glm/
+.co-vibe-context.json
+.co-vibe-memory.json
+*token*
+*secret*
+*.pem
+*.key
+*.pfx
+*.p12
+*.jks
+integrations.local.json
+mcp-servers.json
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+# Node and editors
+node_modules/
+.idea/
+.vscode/
+*.iml
+
+# Build products and logs
+.build/
+dist/
+build/
+target/
+target-agent-ui/
+out/
+*.log
+*.xml
+*.spec
+
+# Android local state
+android-client/local.properties
+android-client/.gradle/
+android-client/app/build/
+
+# OS files
+Thumbs.db
+.DS_Store

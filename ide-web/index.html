@@ -1,0 +1,485 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GLM スタンドアロン IDE</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Monaco Editor Local Offline Loader -->
+  <script src="vs/loader.js"></script>
+</head>
+<body>
+  <div id="app">
+    <!-- Toast Notification Container (Self-healing & Error alerts) -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Header / Top Control Bar -->
+    <header class="top-bar">
+      <div class="brand">
+        <span class="logo"><span class="brand-icon" data-ui-icon="sparkle"></span><span>GLM スタンドアロン IDE</span></span>
+        <span class="version">v1.1（自己修復）</span>
+      </div>
+
+      <div class="menu-strip" aria-label="Application menu">
+        <button class="menu-item has-submenu" data-menu="file">ファイル(F)</button>
+        <button class="menu-item has-submenu" data-menu="edit">編集(E)</button>
+        <button class="menu-item has-submenu" data-menu="selection">選択(S)</button>
+        <button class="menu-item has-submenu" data-menu="view">表示(V)</button>
+        <button class="menu-item has-submenu" data-menu="go">移動(G)</button>
+        <button class="menu-item has-submenu" data-menu="run">実行(R)</button>
+        <button class="menu-item has-submenu" data-menu="terminal">ターミナル(T)</button>
+        <button class="menu-item has-submenu" data-menu="help">ヘルプ(H)</button>
+      </div>
+
+      <div class="controls">
+        <button id="btn-palette" class="btn secondary" title="コマンドパレット (Ctrl+Shift+P)">⌘ コマンド</button>
+        <select id="mode-select" title="ルーティングモード">
+          <option value="STRATEGY">自動最適化</option>
+          <option value="LOCAL_ONLY">ローカルのみ</option>
+          <option value="THRESHOLD">しきい値（16Kトークン）</option>
+        </select>
+        <button id="btn-run" class="btn success">▶ 実行</button>
+        <button id="btn-debug" class="btn secondary">🐞 デバッグ開始</button>
+        <button id="btn-debug-stop" class="btn danger">■ デバッグ停止</button>
+        <input id="debug-breakpoint-line" type="number" min="1" placeholder="行" title="ブレークポイント行" />
+        <button id="btn-debug-breakpoint" class="btn secondary">● BP設定</button>
+        <button id="btn-debug-continue" class="btn secondary">続行</button>
+        <button id="btn-debug-next" class="btn secondary">次へ</button>
+        <button id="btn-debug-inspect" class="btn secondary">スタック/変数</button>
+        <button id="btn-save" class="btn primary">💾 保存 (Ctrl+S)</button>
+        <button id="btn-status" class="btn secondary">🔍 診断</button>
+        <button id="btn-dev-status" class="btn secondary">🧩 開発環境</button>
+        <button id="btn-diff" class="btn secondary">📝 Git差分</button>
+        <button id="btn-clear" class="btn danger">🗑 履歴消去</button>
+        <button id="btn-kill" class="btn danger" title="すべてのAI・ツール・バックエンドプロセスを緊急停止">🛑 キルスイッチ</button>
+      </div>
+    </header>
+
+    <div id="menu-dropdown" class="menu-dropdown hidden" aria-live="polite">
+      <div class="dropdown-group">
+        <div class="dropdown-item" data-action="new-file">新しいファイル</div>
+        <div class="dropdown-item" data-action="new-folder">新しいフォルダー</div>
+        <div class="dropdown-item" data-action="open-file">ファイルを開く</div>
+        <div class="dropdown-item" data-action="open-folder">フォルダーを開く</div>
+      </div>
+      <div class="dropdown-group">
+        <div class="dropdown-item" data-action="settings">設定</div>
+        <div class="dropdown-item" data-action="workbench-settings">ワークベンチ設定</div>
+        <div class="dropdown-item" data-action="ai-panel">AIパネル</div>
+        <div class="dropdown-item" data-action="theme">テーマ</div>
+      </div>
+    </div>
+
+    <!-- Main Workspace -->
+    <main class="main-layout">
+      <!-- Activity Bar (left icon column, VS Code style) -->
+      <nav id="activity-bar" class="activity-bar">
+        <button class="activity-item active" data-view="explorer" title="エクスプローラー (Ctrl+Shift+E)" aria-label="エクスプローラー"><span class="activity-icon explorer-icon">▱</span></button>
+        <button class="activity-item" data-view="search" title="検索 (Ctrl+Shift+F)" aria-label="検索"><span class="activity-icon search-icon">⌕</span></button>
+        <button class="activity-item" data-view="git" title="ソース管理 (Ctrl+Shift+G)"><span class="activity-icon scm-icon">⑂</span></button>
+        <button class="activity-item" data-view="debug" title="実行とデバッグ (Ctrl+Shift+D)"><span class="activity-icon debug-icon">▷</span></button>
+        <button class="activity-item" data-view="sftp" title="SFTP リモート"><span class="activity-icon remote-icon">⇄</span></button>
+        <button class="activity-item" data-view="extensions" title="拡張機能 (Ctrl+Shift+X)"><span class="activity-icon extension-icon">◇</span></button>
+        <div class="activity-spacer"></div>
+        <button class="activity-item" data-view="settings" title="設定 (Ctrl+,)"><span class="activity-icon settings-icon">⚙</span></button>
+      </nav>
+
+      <!-- Primary Side Bar (left) -->
+      <aside id="sidebar" class="sidebar">
+        <!-- Explorer view -->
+        <div class="sidebar-view" data-view-pane="explorer">
+          <div class="panel-header">
+            <span>📁 ワークスペースファイル</span>
+            <button id="btn-refresh-files" title="ファイル一覧を更新" class="btn-icon">🔄</button>
+          </div>
+          <div id="file-tree" class="file-tree">
+            <div class="tree-item">読み込み中...</div>
+          </div>
+          <div class="panel-header margin-top">
+            <span>💬 セッション履歴</span>
+          </div>
+          <div id="session-list" class="session-list">
+            <div class="session-item">読み込み中...</div>
+          </div>
+        </div>
+
+        <!-- Search view -->
+        <div class="sidebar-view hidden" data-view-pane="search">
+          <div class="panel-header"><span>🔍 検索</span></div>
+          <div class="sidebar-pane-body">
+            <input id="search-input" type="text" placeholder="検索..." class="sidebar-input" />
+            <div id="search-results" class="sidebar-list"></div>
+          </div>
+        </div>
+
+        <!-- Git view -->
+        <div class="sidebar-view hidden" data-view-pane="git">
+          <div class="panel-header">
+            <span>🌿 ソース管理</span>
+            <button id="btn-refresh-git" title="Git状態を更新" class="btn-icon">🔄</button>
+          </div>
+          <div class="git-panel">
+            <div id="git-changes" class="git-changes">変更なし</div>
+            <div class="git-commit-box">
+              <button id="btn-git-stage" class="btn secondary full-width">Git 変更をステージ</button>
+              <select id="git-branch-select" class="full-width" title="ブランチ選択"></select>
+              <button id="btn-git-checkout" class="btn secondary full-width">ブランチ切替</button>
+              <button id="btn-git-push" class="btn primary full-width">Git Push</button>
+              <input type="text" id="git-commit-msg" placeholder="コミットメッセージ..." />
+              <button id="btn-git-commit" class="btn primary full-width">Git コミット</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Debug view -->
+        <div class="sidebar-view hidden" data-view-pane="debug">
+          <div class="panel-header"><span>🐞 実行とデバッグ</span></div>
+          <div class="sidebar-pane-body">
+            <button id="btn-debug2" class="btn secondary full-width">▶ デバッグ開始</button>
+            <button id="btn-debug-stop2" class="btn danger full-width">■ 停止</button>
+            <div class="debug-row">
+              <input id="debug-breakpoint-line2" type="number" min="1" placeholder="行" class="sidebar-input" />
+              <button id="btn-debug-breakpoint2" class="btn secondary">● BP</button>
+            </div>
+            <button id="btn-debug-continue2" class="btn secondary full-width">続行</button>
+            <button id="btn-debug-next2" class="btn secondary full-width">次へ</button>
+            <button id="btn-debug-inspect2" class="btn secondary full-width">スタック/変数</button>
+          </div>
+        </div>
+
+        <!-- SFTP view -->
+        <div class="sidebar-view hidden" data-view-pane="sftp">
+          <div class="panel-header"><span>⇄ SFTP リモート</span></div>
+          <div class="git-panel sftp-panel">
+            <select id="sftp-profile" title="保存済みSFTPプロファイル"><option value="">プロファイルなし</option></select>
+            <input type="text" id="sftp-profile-name" placeholder="プロファイル名" autocomplete="off" />
+            <input type="text" id="sftp-host" placeholder="ホスト名" autocomplete="off" />
+            <input type="text" id="sftp-user" placeholder="ユーザー名（任意）" autocomplete="off" />
+            <input type="number" id="sftp-port" value="22" min="1" max="65535" />
+            <input type="text" id="sftp-remote-path" placeholder="リモートパス" autocomplete="off" />
+            <input type="text" id="sftp-local-path" placeholder="ローカルパス" autocomplete="off" />
+            <button id="btn-sftp-profile-save" class="btn secondary full-width">プロファイル保存</button>
+            <button id="btn-sftp-profile-delete" class="btn danger full-width">プロファイル削除</button>
+            <button id="btn-sftp-test" class="btn secondary full-width">接続テスト</button>
+            <button id="btn-sftp-list" class="btn secondary full-width">リモート一覧</button>
+            <button id="btn-sftp-upload" class="btn secondary full-width">現在ファイルをアップロード</button>
+            <button id="btn-sftp-download" class="btn secondary full-width">リモートからダウンロード</button>
+            <pre id="sftp-output" class="output-text">SFTP待機中...</pre>
+          </div>
+        </div>
+
+        <!-- Extensions view -->
+        <div class="sidebar-view hidden" data-view-pane="extensions">
+          <div class="panel-header"><span>🧩 拡張機能</span></div>
+          <div class="sidebar-pane-body">
+            <input id="ext-search" type="text" placeholder="拡張機能を検索..." class="sidebar-input" />
+            <div id="ext-list" class="sidebar-list">
+              <div class="ext-item"><strong>GLM コア</strong><span>組み込みAIとルーティング</span></div>
+              <div class="ext-item"><strong>co-vibe エージェント</strong><span>エージェント実行エンジン</span></div>
+              <div class="ext-item"><strong>Pyright 言語サーバー</strong><span>型推論、補完、定義</span></div>
+              <div class="ext-item"><strong>Jupyter</strong><span>ノートブック実行</span></div>
+              <div class="ext-item"><strong>デバッグアダプター</strong><span>デバッグ実行</span></div>
+              <div class="ext-item"><strong>SFTP</strong><span>リモート転送</span></div>
+              <div class="ext-item"><strong>GitHub MCP</strong><span>GitHub連携</span></div>
+            </div>
+            <div class="panel-header margin-top"><span>マーケットプレイス</span></div>
+            <input id="marketplace-search" type="text" placeholder="拡張機能を検索..." class="sidebar-input" />
+            <div id="marketplace-list" class="sidebar-list"><div class="setting-help">読み込み中...</div></div>
+          </div>
+        </div>
+
+        <!-- Settings view -->
+        <div class="sidebar-view hidden" data-view-pane="settings">
+          <div class="panel-header"><span>⚙️ 設定</span></div>
+          <div class="sidebar-pane-body">
+            <label class="setting-row"><span>ルーティングモード</span>
+              <select id="settings-mode" class="sidebar-input">
+                <option value="STRATEGY">自動最適化</option>
+                <option value="LOCAL_ONLY">ローカルのみ</option>
+                <option value="THRESHOLD">しきい値</option>
+              </select>
+            </label>
+            <label class="setting-row"><span>既定モデル</span>
+              <select id="settings-model" class="sidebar-input">
+                <option value="auto">auto</option>
+                <option value="qwen2.5-coder:7b">qwen2.5-coder:7b</option>
+              </select>
+            </label>
+            <section class="provider-settings" aria-labelledby="model-selection-title">
+              <h3 id="model-selection-title">モデル選択</h3>
+              <div id="model-selection-status" class="setting-help">モデル情報を読み込み中...</div>
+              <label class="setting-row"><span>温度</span><input id="model-temperature" type="number" min="0" max="2" step="0.1" value="0.3" class="sidebar-input" /></label>
+              <label class="setting-row"><span>最大トークン</span><input id="model-max-tokens" type="number" min="1" max="32768" value="2048" class="sidebar-input" /></label>
+              <button id="btn-model-selection-save" class="btn secondary full-width">モデル設定を保存</button>
+            </section>
+            <section class="provider-settings" aria-labelledby="provider-settings-title">
+              <h3 id="provider-settings-title">AIプロバイダ接続</h3>
+              <p class="setting-help">資格情報はこのPCのGLM SecretStoreにのみ保存され、画面や監査ログには表示されません。</p>
+              <label class="setting-row"><span>クラウドプロバイダ</span>
+                <select id="provider-select" class="sidebar-input">
+                  <option value="anthropic">Anthropic</option>
+                  <option value="openai">OpenAI</option>
+                </select>
+              </label>
+              <label class="setting-row"><span>クラウドモデル</span>
+                <select id="provider-model" class="sidebar-input"></select>
+              </label>
+              <div class="provider-card">
+                <strong>OpenAI</strong><span id="provider-openai-status">未確認</span>
+                <input id="provider-openai-credential" type="password" autocomplete="off" placeholder="APIキー" />
+                <div><button class="btn secondary" data-provider-save="openai">保存</button><button class="btn secondary" data-provider-test="openai">接続テスト</button></div>
+              </div>
+              <div class="provider-card">
+                <strong>Anthropic</strong><span id="provider-anthropic-status">未確認</span>
+                <input id="provider-anthropic-credential" type="password" autocomplete="off" placeholder="APIキー" />
+                <div><button class="btn secondary" data-provider-save="anthropic">保存</button><button class="btn secondary" data-provider-test="anthropic">接続テスト</button></div>
+              </div>
+              <div class="provider-card">
+                <strong>GitHub</strong><span id="provider-github-status">未確認</span>
+                <input id="provider-github-credential" type="password" autocomplete="off" placeholder="きめ細かな個人アクセストークン" />
+                <div><button class="btn secondary" data-provider-save="github">保存</button><button class="btn secondary" data-provider-test="github">接続テスト</button></div>
+              </div>
+            </section>
+            <section class="provider-settings" aria-labelledby="integration-settings-title">
+              <h3 id="integration-settings-title">外部連携</h3>
+              <p class="setting-help">有効化には必要な資格情報が必要です。書込み権限は各連携の最小権限ポリシーを超えません。</p>
+              <div class="provider-card"><strong>Notion</strong><span id="integration-notion-status">未確認</span>
+                <input type="password" data-integration-secret="notion_token" autocomplete="off" placeholder="連携トークン" />
+                <div><button class="btn secondary" data-integration-save="notion_token">保存</button><button class="btn secondary" data-integration-toggle="notion">有効化を切替</button></div>
+              </div>
+              <div class="provider-card"><strong>Slack Webhook</strong><span id="integration-slack_webhook-status">未確認</span>
+                <input type="password" data-integration-secret="slack_webhook" autocomplete="off" placeholder="Webhook URL" />
+                <div><button class="btn secondary" data-integration-save="slack_webhook">保存</button><button class="btn secondary" data-integration-toggle="slack_webhook">有効化を切替</button></div>
+              </div>
+              <div class="provider-card"><strong>SharePoint</strong><span id="integration-sharepoint-status">未確認</span>
+                <input type="password" data-integration-secret="graph_tenant_id" autocomplete="off" placeholder="テナントID" />
+                <input type="password" data-integration-secret="graph_client_id" autocomplete="off" placeholder="クライアントID" />
+                <input type="password" data-integration-secret="graph_client_secret" autocomplete="off" placeholder="クライアントシークレット" />
+                <div><button class="btn secondary" data-integration-save-group="sharepoint">資格情報を保存</button><button class="btn secondary" data-integration-toggle="sharepoint">有効化を切替</button></div>
+              </div>
+            </section>
+            <section class="provider-settings" aria-labelledby="customization-settings-title">
+              <h3 id="customization-settings-title">Agent カスタマイズ</h3>
+              <p class="setting-help">ワークスペースの SKILL.md、Instructions、Prompt、Agent 定義、MCP設定を読み込みます。Hookは承認済みサンドボックス外では実行されません。</p>
+              <div class="provider-card customization-status-card">
+                <strong>検出状態</strong><span id="customization-summary-status">未確認</span>
+                <div id="customization-summary" class="setting-help">読み込み中...</div>
+                <button id="btn-customization-reload" class="btn secondary full-width">カスタマイズを再読み込み</button>
+              </div>
+              <div id="customization-items" class="customization-items"></div>
+              <select id="customization-file-select" class="sidebar-input"><option value="">編集するファイルを選択</option></select>
+              <textarea id="customization-editor" class="customization-editor" rows="8" placeholder="カスタマイズファイルの内容"></textarea>
+              <div class="customization-actions"><button id="btn-customization-save" class="btn secondary">保存</button><button id="btn-customization-validate" class="btn secondary">検証</button></div>
+              <div id="customization-validation" class="setting-help"></div>
+            </section>
+            <section class="provider-settings" aria-labelledby="pylance-mcp-title">
+              <h3 id="pylance-mcp-title">Pylance MCP</h3>
+              <div id="pylance-mcp-status" class="setting-help">状態を読み込み中...</div>
+              <div id="pylance-mcp-tools" class="customization-items"></div>
+              <button id="btn-pylance-mcp-refresh" class="btn secondary full-width">Pylance MCP状態を更新</button>
+            </section>
+            <label class="setting-row"><span>エディタフォントサイズ</span>
+              <input id="settings-font-size" type="number" min="10" max="24" value="13" class="sidebar-input" />
+            </label>
+            <label class="setting-row"><span>サイドバー位置</span>
+              <select id="settings-sidebar-pos" class="sidebar-input">
+                <option value="left">左</option>
+                <option value="right">右</option>
+              </select>
+            </label>
+            <button id="btn-settings-apply" class="btn primary full-width">適用</button>
+            <button id="btn-layout-reset" class="btn secondary full-width">レイアウトをリセット</button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Left sash (sidebar resize) -->
+      <div id="sash-left" class="sash sash-vertical" title="ドラッグで幅変更"></div>
+
+      <!-- Center Editor Pane (Multi-Tab & Monaco) -->
+      <section class="editor-pane">
+        <!-- Multi-Tab Bar -->
+        <div id="tab-bar" class="tab-bar">
+          <!-- Dynamic tabs injected by app.js -->
+        </div>
+
+        <div class="editor-header">
+          <span id="current-filename">ファイルが選択されていません</span>
+          <div class="view-toggle">
+            <button id="btn-view-code" class="active">コード</button>
+            <button id="btn-view-diff">差分表示</button>
+            <button id="btn-go-definition">定義ジャンプ</button>
+            <button id="btn-find-references">参照検索</button>
+            <button id="btn-rename-symbol">リネーム案</button>
+            <button id="btn-rename-apply">リネーム適用</button>
+            <button id="btn-review-selection">選択範囲レビュー</button>
+            <button id="btn-commit-suggest">コミットメッセージ提案</button>
+          </div>
+        </div>
+        <div id="editor-container" class="editor-container"></div>
+        <div id="ipynb-container" class="ipynb-container hidden"></div>
+
+        <!-- Bottom sash (panel height resize) -->
+        <div id="sash-bottom" class="sash sash-horizontal" title="ドラッグで高さ変更"></div>
+
+        <!-- Execution Output / Bottom Tab Panel -->
+        <div id="output-panel" class="output-panel">
+          <div class="output-header">
+            <div class="bottom-tabs">
+              <button class="bottom-tab active" data-tab="output">🖥️ 出力</button>
+              <button class="bottom-tab" data-tab="problems">⚠️ 問題 <span id="problems-count" class="badge problems-badge">0</span></button>
+              <button class="bottom-tab" data-tab="debug">🐞 デバッグコンソール</button>
+              <button class="bottom-tab" data-tab="terminal">⌨️ ターミナル</button>
+            </div>
+            <button id="btn-clear-output" class="btn-icon">✖</button>
+          </div>
+          <div id="panel-output" class="bottom-pane">
+            <pre id="output-text" class="output-text">待機中...</pre>
+          </div>
+          <div id="panel-problems" class="bottom-pane hidden">
+            <div id="problems-list" class="problems-list">診断なし</div>
+          </div>
+          <div id="panel-debug" class="bottom-pane hidden">
+            <pre id="debug-console" class="output-text">デバッグ待機中...</pre>
+          </div>
+          <div id="panel-terminal" class="bottom-pane hidden">
+            <pre id="terminal-view" class="output-text terminal-view"></pre>
+            <div class="terminal-input-row">
+              <span class="terminal-prompt">PS&gt;</span>
+              <input id="terminal-input" type="text" autocomplete="off" spellcheck="false" placeholder="コマンドを入力してEnter..." />
+            </div>
+          </div>
+        </div>
+        <div id="dev-status-panel" class="dev-status-panel hidden"></div>
+      </section>
+
+      <!-- Right sash (AI panel resize) -->
+      <div id="sash-right" class="sash sash-vertical" title="ドラッグで幅変更"></div>
+
+      <!-- Secondary Side Bar (right AI panel) -->
+      <aside id="ai-panel" class="ai-panel">
+        <div class="panel-header ai-chat-header">
+          <span>チャット</span>
+          <div class="chat-header-actions">
+            <button id="btn-chat-history" class="btn-icon icon-button" title="チャット履歴" aria-label="チャット履歴" data-ui-icon="history"></button>
+            <button id="btn-chat-new" class="btn-icon icon-button" title="新しいチャット" aria-label="新しいチャット" data-ui-icon="plus"></button>
+          </div>
+          <span id="tier-badge" class="badge">ローカル</span>
+        </div>
+        <div id="chat-history-popover" class="chat-history-popover hidden" aria-label="チャット履歴">
+          <div class="chat-history-title">最近のチャット</div>
+          <div id="chat-history-list" class="chat-history-list"><button class="chat-history-item">読み込み中...</button></div>
+        </div>
+        <div class="ai-subbar">
+          <div class="ctx-meter" title="コンテキスト使用量">
+            <div id="ctx-meter-fill" class="ctx-meter-fill"></div>
+          </div>
+          <span id="ctx-meter-label" class="ctx-meter-label">0%</span>
+        </div>
+
+        <section class="orchestration-panel" aria-label="GLM エージェント編成">
+          <div class="panel-header compact-panel-header">
+            <button id="orchestration-toggle" class="orchestration-toggle" type="button" aria-expanded="false">
+              <span class="control-icon" data-ui-icon="agent"></span>
+              <span>Agent編成</span>
+            </button>
+            <button id="btn-mlops-refresh" class="btn-icon icon-button" title="エージェント編成の状態を更新" aria-label="エージェント編成の状態を更新" data-ui-icon="refresh"></button>
+          </div>
+          <div id="orchestration-body" class="orchestration-body hidden">
+            <div class="orchestration-controls">
+            <input id="orchestration-objective" type="text" placeholder="作業目的を入力" />
+            <button id="btn-orchestration-plan" class="btn secondary">計画</button>
+            </div>
+            <div id="orchestration-status" class="orchestration-status">計画管理は待機中</div>
+            <div id="mlops-status" class="mlops-status">ワークフロー: 無効 / 実行記録: ローカル</div>
+          </div>
+        </section>
+        
+        <!-- Interactive Approval Banner / Card Container -->
+        <div id="approval-container" class="approval-container hidden">
+          <div class="approval-card">
+            <div class="approval-title">⚠️ ツール実行承認要求</div>
+            <div id="approval-details" class="approval-details"></div>
+            <div class="approval-actions">
+              <button data-action="y" class="btn-approve">一度許可 (y)</button>
+              <button data-action="a" class="btn-allow-all">常に許可 (a)</button>
+              <button data-action="n" class="btn-deny">一度拒否 (n)</button>
+              <button data-action="d" class="btn-deny-all">常に拒否 (d)</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat Output Timeline -->
+        <div id="chat-messages" class="chat-messages">
+          <div class="message system">
+            <div class="sender">GLM System</div>
+            <div class="content">GLM Standalone IDE へようこそ。AIへの指示を入力してください。</div>
+          </div>
+        </div>
+
+        <select id="chat-role" class="chat-role-hidden" title="送信するメッセージのロール" aria-hidden="true" tabindex="-1">
+          <option value="user">User</option>
+          <option value="system">System</option>
+        </select>
+
+        <!-- Chat Input Form -->
+        <form id="chat-form" class="chat-input-form">
+          <textarea id="chat-input" placeholder="AIへの指示・コード生成プロンプト..." rows="3"></textarea>
+          <div class="chat-modebar">
+            <button id="btn-chat-add" type="button" class="compact-icon icon-button" title="コンテキストを追加" aria-label="コンテキストを追加" data-ui-icon="plus"></button>
+          <label class="compact-control chat-pill" title="実行モード">
+            <span class="control-icon" data-ui-icon="agent"></span>
+            <select id="chat-mode" title="Chatは回答のみ、Agentはツールを実行">
+              <option value="chat">チャット</option>
+              <option value="agent">Agent</option>
+            </select>
+          </label>
+          <label class="compact-control chat-pill" title="使用モデル">
+            <span class="control-icon" data-ui-icon="auto"></span>
+            <select id="agent-model-select" title="モデル選択">
+              <option value="auto">Auto</option>
+              <option value="qwen2.5-coder:7b">Qwen 7B</option>
+            </select>
+          </label>
+          <button id="btn-chat-options" type="button" class="compact-icon icon-button" title="チャット設定" aria-label="チャット設定" data-ui-icon="sliders"></button>
+          <button id="btn-voice" type="button" class="compact-icon icon-button" title="音声入力" aria-label="音声入力" data-ui-icon="mic"></button>
+          <button id="btn-agent-stop" type="button" class="btn danger hidden" title="実行中のAgentを停止">停止</button>
+          <span id="agent-status" class="agent-status">待機中</span>
+            <button type="submit" id="btn-send" class="compact-send icon-button" title="送信" aria-label="送信" data-ui-icon="send"></button>
+          </div>
+        </form>
+      </aside>
+    </main>
+
+    <!-- Command Palette / Quick Open Overlay -->
+    <div id="palette-overlay" class="palette-overlay hidden">
+      <div class="palette-box">
+        <input id="palette-input" type="text" placeholder="コマンドまたはファイル名..." autocomplete="off" spellcheck="false" />
+        <div id="palette-list" class="palette-list"></div>
+      </div>
+    </div>
+
+    <!-- Footer / Status Bar -->
+    <footer class="status-bar">
+      <div class="status-item">
+        <span class="dot green"></span>
+        <span id="status-mode">自動最適化</span>
+      </div>
+      <div class="status-item">
+        <span>GPU: </span><span id="stat-gpu-temp">--℃</span> (<span id="stat-gpu-util">--%</span>)
+      </div>
+      <div class="status-item">
+        <span>VRAM: </span><span id="stat-vram">-- / -- GB</span>
+      </div>
+      <div class="status-item">
+        <span>予算: </span><span id="stat-budget">$-- / $--</span>
+      </div>
+      <div id="stat-throttle-warning" class="status-item warning hidden">
+        <span>⚠️ サーマルスロットリング検出</span>
+      </div>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.glm.remote'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.glm.remote'
+        minSdk 28
+        targetSdk 35
+        versionCode 1
+        versionName '1.0.0'
+    }
+
+    signingConfigs {
+        release {
+            def storePath = System.getenv('GLM_ANDROID_STORE_FILE')
+            if (storePath) {
+                storeFile file(storePath)
+                storePassword System.getenv('GLM_ANDROID_STORE_PASSWORD')
+                keyAlias 'glm-remote'
+                keyPassword System.getenv('GLM_ANDROID_STORE_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (System.getenv('GLM_ANDROID_STORE_FILE')) signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

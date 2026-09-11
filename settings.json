@@ -1,0 +1,35 @@
+﻿{
+  "permissions": {
+    "allow": [],
+    "deny": [
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/secrets/**)",
+      "Read(~/.ssh/**)",
+      "Read(~/.glm/secrets/**)",
+      "Bash(cat .env)",
+      "Bash(curl * | bash)",
+      "Bash(wget * -O- | sh)",
+      "Bash(powershell * | iex)"
+    ]
+  },
+  "privacy": {
+    "always_local": false,
+    "require_cloud_confirmation": false,
+    "retention_days": {
+      "sessions": 30,
+      "audit": 90
+    }
+  },
+  "mlops": {
+    "airflow_enabled": false,
+    "airflow_url": "",
+    "mlflow_enabled": false,
+    "mlflow_url": "",
+    "automatic_merge": false,
+    "automatic_push": false,
+    "external_web_search_default": false,
+    "require_approval_for_worktrees": true,
+    "require_approval_for_model_registration": true
+  }
+}

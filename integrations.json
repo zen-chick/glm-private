@@ -1,0 +1,36 @@
+﻿{
+  "integrations": {
+    "notion": {
+      "enabled": false,
+      "mode": "read_only",
+      "required_secrets": ["notion_token"],
+      "minimum_scopes": ["read_content"],
+      "available_features": ["search_pages", "get_page_metadata"],
+      "blocked_features": ["create_page", "update_page", "delete_page"]
+    },
+    "slack_webhook": {
+      "enabled": false,
+      "mode": "send_only",
+      "required_secrets": ["slack_webhook"],
+      "minimum_scopes": ["incoming_webhook"],
+      "available_features": ["send_notification"],
+      "blocked_features": ["read_messages", "update_messages", "delete_messages"]
+    },
+    "slack_bot": {
+      "enabled": false,
+      "mode": "read_only",
+      "required_secrets": ["slack_bot_token"],
+      "minimum_scopes": ["channels:history", "channels:read"],
+      "available_features": ["read_channel_messages"],
+      "blocked_features": ["send_messages", "update_messages", "delete_messages"]
+    },
+    "sharepoint": {
+      "enabled": false,
+      "mode": "read_only",
+      "required_secrets": ["graph_tenant_id", "graph_client_id", "graph_client_secret"],
+      "minimum_scopes": ["Sites.Selected"],
+      "available_features": ["read_approved_site_files"],
+      "blocked_features": ["write_files", "delete_files", "read_all_sites"]
+    }
+  }
+}
