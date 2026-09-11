@@ -17,7 +17,12 @@ jobs:
         with:
           python-version: "3.11"
       - run: python -m pip install pytest
-      - run: python -m pytest tests --tb=short -q
+      - name: Run portable test suite
+        run: >-
+          python -m pytest tests --tb=short -q
+          --ignore=tests/test_covibe_adapter.py
+          --deselect=tests/test_ide_core.py::TestUnifiedCoreService::test_notebook_cell_execution
+          --deselect=tests/test_sandbox.py::TestSandboxRunner::test_runs_in_configured_wsl2
 
   android-debug:
     runs-on: ubuntu-latest

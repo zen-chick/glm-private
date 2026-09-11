@@ -38,7 +38,8 @@ target/
 target-agent-ui/
 out/
 *.log
-*.xml
+*-results.xml
+junit*.xml
 *.spec
 
 # Android local state
